@@ -1,0 +1,29 @@
+{
+  "name": "campus-sync-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "4 Interconnected React Campus Management Web Apps (Master, College, Teacher, Student) with Local + GitHub Online Sync",
+  "workspaces": [
+    "packages/shared-core",
+    "apps/master-app",
+    "apps/college-app",
+    "apps/teacher-app",
+    "apps/student-app"
+  ],
+  "scripts": {
+    "sync:server": "node scripts/local-sync-server.mjs",
+    "dev:master": "npm --workspace=apps/master-app run dev",
+    "dev:college": "npm --workspace=apps/college-app run dev",
+    "dev:teacher": "npm --workspace=apps/teacher-app run dev",
+    "dev:student": "npm --workspace=apps/student-app run dev",
+    "dev": "concurrently -n SYNC,MASTER,COLLEGE,TEACHER,STUDENT -c gray,magenta,blue,cyan,green \"npm run sync:server\" \"npm run dev:master\" \"npm run dev:college\" \"npm run dev:teacher\" \"npm run dev:student\"",
+    "build:all": "node scripts/build-all.mjs",
+    "serve:all": "node scripts/serve-unified.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
