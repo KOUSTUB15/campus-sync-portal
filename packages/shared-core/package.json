@@ -1,0 +1,14 @@
+{
+  "name": "@campus/shared-core",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./styles/theme.css": "./src/styles/theme.css"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "lucide-react": ">=0.400.0"
+  }
+}
