@@ -1,49 +1,70 @@
 import React, { useState } from 'react';
-import { Users, LayoutDashboard, BookOpen, ClipboardCheck, Sparkles, Award } from 'lucide-react';
+import { Users, BookOpen, Award, ClipboardCheck, FileSpreadsheet, FolderGit2 } from 'lucide-react';
 import { StoreProvider, useCampusStore, AppShell, LoginScreen } from '@campus/shared-core';
-import Dashboard from './pages/Dashboard.jsx';
-import ClassroomLab from './pages/ClassroomLab.jsx';
-import EvalProjects from './pages/EvalProjects.jsx';
-import AIMentoring from './pages/AIMentoring.jsx';
-import ProfileResearch from './pages/ProfileResearch.jsx';
+import HodSubjectsTimetable from './hod/HodSubjectsTimetable.jsx';
+import HodExamsEligibility from './hod/HodExamsEligibility.jsx';
+import HodOperations from './hod/HodOperations.jsx';
+import FacultySubjectsWork from './faculty/FacultySubjectsWork.jsx';
+import FacultyQuizzesAssignments from './faculty/FacultyQuizzesAssignments.jsx';
+import FacultyProjectsResearch from './faculty/FacultyProjectsResearch.jsx';
 
 function TeacherWorkspace() {
-  const { currentUser } = useCampusStore();
-  const [tab, setTab] = useState('dashboard');
+  const { currentUser, db } = useCampusStore();
+  const [tab, setTab] = useState('default');
 
   if (!currentUser) {
     return (
       <LoginScreen
         portalId="teacher"
-        heading="Teacher & Mentor Login"
-        tagline="Manage classes, labs, B1/B2 batches, IA marks, AI teaching tools & research"
+        heading="Teachers Portal Login (HOD & Faculty)"
+        tagline="HODs receive department control; Faculty receive their strictly allotted subject workspace"
       />
     );
   }
 
+  // STRICT SPLIT: HOD vs FACULTY
+  if (currentUser.subRole === 'HOD') {
+    const active = tab === 'default' ? 'subjects' : tab;
+    const pendingLeaves = db.leaves.filter((l) => l.status === 'Pending').length;
+    const navGroups = [
+      {
+        label: 'HOD Control Panel',
+        items: [
+          { id: 'subjects', label: 'Subjects & Editable Timetable', icon: BookOpen },
+          { id: 'exams', label: 'Eligibility, Year Back & Exams', icon: FileSpreadsheet },
+          { id: 'ops', label: 'Leaves, Projects & Startups', icon: ClipboardCheck, badge: pendingLeaves },
+        ],
+      },
+    ];
+    return (
+      <AppShell portalId="teacher" roleBadge="HOD Portal" icon={Users} navGroups={navGroups} activeTab={active} onTabChange={setTab}>
+        {active === 'subjects' && <HodSubjectsTimetable />}
+        {active === 'exams' && <HodExamsEligibility />}
+        {active === 'ops' && <HodOperations />}
+      </AppShell>
+    );
+  }
+
+  // FACULTY JOB-SCOPED PORTAL
+  const active = tab === 'default' ? 'work' : tab;
+  const mySubCount = db.subjects.filter((s) => s.facultyId === currentUser.refId).length;
+  const myGroupCount = db.projectGroups.filter((g) => g.facultyId === currentUser.refId).length;
   const navGroups = [
     {
-      label: 'Overview',
-      items: [{ id: 'dashboard', label: 'Faculty Dashboard', icon: LayoutDashboard }],
-    },
-    {
-      label: 'Teaching Modules',
+      label: 'Faculty Job Portal',
       items: [
-        { id: 'classroom', label: 'Classroom & Lab Teaching', icon: BookOpen },
-        { id: 'eval', label: 'Evaluation & Projects', icon: ClipboardCheck },
-        { id: 'ai', label: 'AI & Student Mentoring', icon: Sparkles },
-        { id: 'profile', label: 'Profile & Research', icon: Award },
+        { id: 'work', label: 'My Subjects, Syllabus & Marks', icon: BookOpen, badge: mySubCount },
+        { id: 'qa', label: 'Quizzes & Assignments', icon: ClipboardCheck },
+        { id: 'proj', label: 'Projects, Leave & Research', icon: FolderGit2, badge: myGroupCount },
       ],
     },
   ];
 
   return (
-    <AppShell portalId="teacher" icon={Users} navGroups={navGroups} activeTab={tab} onTabChange={setTab}>
-      {tab === 'dashboard' && <Dashboard onNavigate={setTab} />}
-      {tab === 'classroom' && <ClassroomLab />}
-      {tab === 'eval' && <EvalProjects />}
-      {tab === 'ai' && <AIMentoring />}
-      {tab === 'profile' && <ProfileResearch />}
+    <AppShell portalId="teacher" roleBadge="Faculty Portal" icon={Award} navGroups={navGroups} activeTab={active} onTabChange={setTab}>
+      {active === 'work' && <FacultySubjectsWork />}
+      {active === 'qa' && <FacultyQuizzesAssignments />}
+      {active === 'proj' && <FacultyProjectsResearch />}
     </AppShell>
   );
 }

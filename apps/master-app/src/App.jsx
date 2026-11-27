@@ -1,51 +1,46 @@
 import React, { useState } from 'react';
-import { Shield, Compass, Sliders, Bell, KeyRound, Cloud } from 'lucide-react';
+import { Shield, Compass, Sliders, Users, BookOpen, Cloud } from 'lucide-react';
 import { StoreProvider, useCampusStore, AppShell, LoginScreen } from '@campus/shared-core';
-import GatewayHub from './pages/GatewayHub.jsx';
-import MasterSettings from './pages/MasterSettings.jsx';
-import GlobalNotices from './pages/GlobalNotices.jsx';
-import SecurityAuth from './pages/SecurityAuth.jsx';
-import CloudSyncCenter from './pages/CloudSyncCenter.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import InstitutionSettings from './pages/InstitutionSettings.jsx';
+import PeopleManager from './pages/PeopleManager.jsx';
+import LibraryMaster from './pages/LibraryMaster.jsx';
+import NoticesSync from './pages/NoticesSync.jsx';
 
 function MasterWorkspace() {
-  const { currentUser } = useCampusStore();
-  const [tab, setTab] = useState('gateway');
+  const { currentUser, db } = useCampusStore();
+  const [tab, setTab] = useState('dashboard');
 
   if (!currentUser) {
     return (
       <LoginScreen
         portalId="master"
         heading="Master Portal Login"
-        tagline="Configure system rules, permissions, global notices & launch all portals"
+        tagline="Manage Institution Name, Teachers, Students, Office Workers & Library Books"
       />
     );
   }
 
   const navGroups = [
     {
-      label: 'Campus Gateway',
+      label: 'Master Control',
       items: [
-        { id: 'gateway', label: 'Portal Hub & Role Switch', icon: Compass },
-        { id: 'settings', label: 'Master Settings & Rules', icon: Sliders },
-        { id: 'notices', label: 'Global Circulars', icon: Bell },
-      ],
-    },
-    {
-      label: 'Security & Online Sync',
-      items: [
-        { id: 'security', label: 'Accounts & OTP Reset', icon: KeyRound },
-        { id: 'sync', label: 'GitHub Cloud Sync', icon: Cloud },
+        { id: 'dashboard', label: 'Portal Hub & Overview', icon: Compass },
+        { id: 'settings', label: 'Institution & Rules', icon: Sliders },
+        { id: 'people', label: 'Teachers, Students & Staff', icon: Users, badge: db.users.length },
+        { id: 'library', label: 'Library Available Books', icon: BookOpen },
+        { id: 'sync', label: 'Notices & GitHub Sync', icon: Cloud },
       ],
     },
   ];
 
   return (
     <AppShell portalId="master" icon={Shield} navGroups={navGroups} activeTab={tab} onTabChange={setTab}>
-      {tab === 'gateway' && <GatewayHub onNavigate={setTab} />}
-      {tab === 'settings' && <MasterSettings />}
-      {tab === 'notices' && <GlobalNotices />}
-      {tab === 'security' && <SecurityAuth />}
-      {tab === 'sync' && <CloudSyncCenter />}
+      {tab === 'dashboard' && <Dashboard onNavigate={setTab} />}
+      {tab === 'settings' && <InstitutionSettings />}
+      {tab === 'people' && <PeopleManager />}
+      {tab === 'library' && <LibraryMaster />}
+      {tab === 'sync' && <NoticesSync />}
     </AppShell>
   );
 }

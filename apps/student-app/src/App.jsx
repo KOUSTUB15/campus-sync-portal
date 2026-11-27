@@ -1,49 +1,50 @@
 import React, { useState } from 'react';
-import { GraduationCap, LayoutDashboard, UserCog, BookOpen, FileCheck2, Rocket } from 'lucide-react';
+import { GraduationCap, BookOpen, ClipboardCheck, Award } from 'lucide-react';
 import { StoreProvider, useCampusStore, AppShell, LoginScreen } from '@campus/shared-core';
-import Dashboard from './pages/Dashboard.jsx';
-import SessionProfile from './pages/SessionProfile.jsx';
-import DailyLearning from './pages/DailyLearning.jsx';
-import ExamsProjects from './pages/ExamsProjects.jsx';
-import GrowthServices from './pages/GrowthServices.jsx';
+import SemesterHub from './pages/SemesterHub.jsx';
+import QuizzesAssignments from './pages/QuizzesAssignments.jsx';
+import ResultsProjectsServices from './pages/ResultsProjectsServices.jsx';
 
 function StudentWorkspace() {
-  const { currentUser } = useCampusStore();
-  const [tab, setTab] = useState('dashboard');
+  const { currentUser, db } = useCampusStore();
+  const [tab, setTab] = useState('hub');
 
   if (!currentUser) {
     return (
       <LoginScreen
         portalId="student"
         heading="Student Portal Login"
-        tagline="Access lectures, quizzes, labs, hall tickets, AICTE tracker, certificates & drives"
+        tagline="Access semester subjects, timetable, quizzes, assignments, results & project meetings"
       />
     );
   }
 
+  const student = db.students.find((s) => s.usn === currentUser.refId);
+  const activeQuizzes = student ? db.quizzes.filter((q) => q.semester === student.semester && q.isActive).length : 0;
+
   const navGroups = [
     {
-      label: 'Overview',
-      items: [{ id: 'dashboard', label: 'Student Dashboard', icon: LayoutDashboard }],
-    },
-    {
-      label: 'Learner Journey',
+      label: student ? `${student.semester} (${student.eligibilityStatus})` : 'Student Hub',
       items: [
-        { id: 'session', label: '1. Session & Profile', icon: UserCog },
-        { id: 'learning', label: '2. Daily Learning & Labs', icon: BookOpen },
-        { id: 'exams', label: '3. Exams, Projects & Guides', icon: FileCheck2 },
-        { id: 'services', label: '4. Growth & Services', icon: Rocket },
+        { id: 'hub', label: 'Subjects, Timetable & Docs', icon: BookOpen },
+        { id: 'qa', label: 'Quizzes & Assignments', icon: ClipboardCheck, badge: activeQuizzes },
+        { id: 'results', label: 'Results, Projects & Requests', icon: Award },
       ],
     },
   ];
 
   return (
-    <AppShell portalId="student" icon={GraduationCap} navGroups={navGroups} activeTab={tab} onTabChange={setTab}>
-      {tab === 'dashboard' && <Dashboard onNavigate={setTab} />}
-      {tab === 'session' && <SessionProfile />}
-      {tab === 'learning' && <DailyLearning />}
-      {tab === 'exams' && <ExamsProjects />}
-      {tab === 'services' && <GrowthServices />}
+    <AppShell
+      portalId="student"
+      roleBadge={student?.eligibilityStatus === 'Year Back' ? `Year Back • Yr ${student.academicYearLevel}` : `${student?.semester || 'Student'}`}
+      icon={GraduationCap}
+      navGroups={navGroups}
+      activeTab={tab}
+      onTabChange={setTab}
+    >
+      {tab === 'hub' && <SemesterHub />}
+      {tab === 'qa' && <QuizzesAssignments />}
+      {tab === 'results' && <ResultsProjectsServices />}
     </AppShell>
   );
 }

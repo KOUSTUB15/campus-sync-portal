@@ -4,9 +4,5 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   base: process.env.VITE_BASE_PATH || '/teacher/',
-  server: {
-    port: 5172,
-    strictPort: true,
-    open: false,
-  },
+  server: { port: 5172, strictPort: true, open: false },
 });
