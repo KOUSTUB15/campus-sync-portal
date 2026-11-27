@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { INITIAL_DB } from './initialData.js';
+import { EMPTY_DB } from './initialData.js';
 import {
   loadLocalState,
   saveLocalState,
@@ -15,10 +15,10 @@ import {
 } from './syncEngine.js';
 
 const StoreContext = createContext(null);
-const THEME_KEY = 'campus_portal_theme_v1';
+const THEME_KEY = 'campus_portal_v2_theme';
 
 export function StoreProvider({ portalRole, children }) {
-  const initial = loadLocalState(INITIAL_DB);
+  const initial = loadLocalState(EMPTY_DB);
   const [db, setDb] = useState(initial.db);
   const lastUpdatedRef = useRef(initial.updatedAt);
 
@@ -33,7 +33,7 @@ export function StoreProvider({ portalRole, children }) {
   });
   const [toast, setToast] = useState(null);
 
-  const authStorageKey = `campus_auth_${portalRole}`;
+  const authStorageKey = `campus_v2_auth_${portalRole}`;
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem(authStorageKey) || 'null');
@@ -49,7 +49,6 @@ export function StoreProvider({ portalRole, children }) {
     }, 3400);
   }, []);
 
-  // Apply theme globally
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem(THEME_KEY, theme);
@@ -57,42 +56,36 @@ export function StoreProvider({ portalRole, children }) {
 
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
-  // Apply incoming remote updates only if newer
   const applyRemote = useCallback((remoteDb, remoteTs, source) => {
     if (!remoteDb) return;
     if (remoteTs && remoteTs <= lastUpdatedRef.current) return;
+    const merged = { ...EMPTY_DB, ...remoteDb };
     lastUpdatedRef.current = remoteTs || Date.now();
-    saveLocalState(remoteDb, lastUpdatedRef.current);
-    setDb(remoteDb);
-    setSyncMeta({
-      state: 'synced',
-      source,
-      lastSyncTime: new Date().toLocaleTimeString(),
-      error: '',
-    });
+    saveLocalState(merged, lastUpdatedRef.current);
+    setDb(merged);
+    setSyncMeta({ state: 'synced', source, lastSyncTime: new Date().toLocaleTimeString(), error: '' });
   }, []);
 
-  // Subscribe to BroadcastChannel + localStorage + Local Dev Relay SSE
   useEffect(() => {
-    const unsub = subscribeLiveChannels(
-      applyRemote,
-      (isUp) => setRelayConnected(isUp),
-      (cfg) => setGhConfig(cfg)
-    );
-
-    // Pull initial state from Local Dev Relay if running locally
+    const unsub = subscribeLiveChannels(applyRemote, setRelayConnected, setGhConfig);
     pullFromLocalRelay().then((payload) => {
       if (payload?.db && payload.updatedAt > lastUpdatedRef.current) {
         applyRemote(payload.db, payload.updatedAt, 'Local Dev Relay');
-      } else if (payload === null && lastUpdatedRef.current === 0) {
-        saveLocalState(INITIAL_DB, Date.now());
       }
     });
-
     return unsub;
   }, [applyRemote]);
 
-  // GitHub Gist Cloud Auto-Polling (every 8 seconds when configured)
+  // Keep currentUser synced if admin updates their role/name/email
+  useEffect(() => {
+    if (!currentUser) return;
+    const latest = db.users.find((u) => u.id === currentUser.id);
+    if (latest && JSON.stringify(latest) !== JSON.stringify(currentUser)) {
+      sessionStorage.setItem(authStorageKey, JSON.stringify(latest));
+      setCurrentUser(latest);
+    }
+  }, [db.users, currentUser, authStorageKey]);
+
   const pullGitHubNow = useCallback(async (silent = false) => {
     const cfg = getGitHubSyncConfig();
     if (!cfg?.gistId) return;
@@ -119,7 +112,6 @@ export function StoreProvider({ portalRole, children }) {
     return () => clearInterval(id);
   }, [ghConfig?.gistId, ghConfig?.token, ghConfig?.autoSync, pullGitHubNow]);
 
-  // Core update function shared by all 4 apps
   const updateDb = useCallback((updater, toastMsg) => {
     setDb((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
@@ -134,12 +126,7 @@ export function StoreProvider({ portalRole, children }) {
         setSyncMeta((s) => ({ ...s, state: 'syncing', error: '' }));
         pushToGitHubGist(cfg, next, now)
           .then(() => {
-            setSyncMeta({
-              state: 'synced',
-              source: 'GitHub Gist Cloud',
-              lastSyncTime: new Date().toLocaleTimeString(),
-              error: '',
-            });
+            setSyncMeta({ state: 'synced', source: 'GitHub Gist Cloud', lastSyncTime: new Date().toLocaleTimeString(), error: '' });
           })
           .catch((err) => {
             setSyncMeta((s) => ({ ...s, state: 'error', error: err.message }));
@@ -157,17 +144,43 @@ export function StoreProvider({ portalRole, children }) {
     if (toastMsg) showToast(toastMsg);
   }, [relayConnected, showToast]);
 
+  const bootstrapMaster = ({ institutionName, institutionCode, academicYear, activeSemester, name, email, password, phone }) => {
+    const masterUser = {
+      id: `USR-M-${Date.now().toString().slice(-4)}`,
+      refId: 'MASTER-01',
+      portal: 'master',
+      subRole: 'Master Admin',
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      phone: phone.trim(),
+      dept: 'Administration',
+    };
+    updateDb((prev) => ({
+      ...prev,
+      initialized: true,
+      masterSettings: {
+        ...prev.masterSettings,
+        institutionName: institutionName.trim(),
+        institutionCode: institutionCode.trim(),
+        academicYear: academicYear.trim() || '2026-2027',
+        activeSemester: activeSemester || '1st Sem',
+      },
+      users: [masterUser, ...prev.users.filter((u) => u.portal !== 'master')],
+    }), 'Institution & Master Admin initialized!');
+    sessionStorage.setItem(authStorageKey, JSON.stringify(masterUser));
+    setCurrentUser(masterUser);
+  };
+
   const configureGitHubSync = async (newCfg) => {
     saveGitHubSyncConfig(newCfg);
     setGhConfig(newCfg);
-    if (newCfg.gistId) {
-      await pullGitHubNow(false);
-    }
+    if (newCfg.gistId) await pullGitHubNow(false);
   };
 
   const createCloudGist = async (token) => {
     const created = await createGitHubSyncGist(token, db);
-    const cfg = { token: token.trim(), gistId: created.gistId, autoSync: true, htmlUrl: created.htmlUrl };
+    const cfg = { token: token.trim().replace(/^Bearer\s+/i, ''), gistId: created.gistId, autoSync: true, htmlUrl: created.htmlUrl };
     saveGitHubSyncConfig(cfg);
     setGhConfig(cfg);
     setSyncMeta({ state: 'synced', source: 'GitHub Gist Cloud', lastSyncTime: new Date().toLocaleTimeString(), error: '' });
@@ -187,36 +200,30 @@ export function StoreProvider({ portalRole, children }) {
       lastUpdatedRef.current = now;
       await pushToGitHubGist(cfg, db, now);
       setSyncMeta({ state: 'synced', source: 'GitHub Gist Cloud', lastSyncTime: new Date().toLocaleTimeString(), error: '' });
-      showToast('Pushed campus database to GitHub Cloud');
+      showToast('Pushed database to GitHub Cloud');
     } catch (err) {
       setSyncMeta((s) => ({ ...s, state: 'error', error: err.message }));
       showToast(err.message, 'error');
     }
   };
 
-  const resetDb = () => {
-    updateDb(() => INITIAL_DB, 'Reset all 4 portals back to clean demo seed data');
+  const wipeAllData = () => {
+    updateDb(() => EMPTY_DB, 'All data cleared to clean empty state.');
+    sessionStorage.removeItem(authStorageKey);
+    setCurrentUser(null);
   };
 
   const login = (email, password) => {
-    const match = db.users.find(
-      (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password
-    );
-    if (!match) return { ok: false, error: 'Invalid email or password.' };
-    if (portalRole !== 'master' && match.role !== portalRole && match.role !== 'master') {
-      return { ok: false, error: `This account belongs to the ${match.role.toUpperCase()} portal.` };
+    const cleanEmail = email.trim().toLowerCase();
+    const match = db.users.find((u) => u.email.toLowerCase() === cleanEmail && u.password === password);
+    if (!match) return { ok: false, error: 'Invalid email or password. Make sure your account has been created in Master or College Portal.' };
+    if (match.portal !== portalRole) {
+      return { ok: false, error: `This account belongs to the ${match.portal.toUpperCase()} portal (${match.subRole}), not this portal.` };
     }
     sessionStorage.setItem(authStorageKey, JSON.stringify(match));
     setCurrentUser(match);
-    showToast(`Welcome back, ${match.name}`);
+    showToast(`Signed in as ${match.name} (${match.subRole})`);
     return { ok: true, user: match };
-  };
-
-  const quickDemoLogin = () => {
-    const match = db.users.find((u) => u.role === portalRole) || db.users[0];
-    sessionStorage.setItem(authStorageKey, JSON.stringify(match));
-    setCurrentUser(match);
-    showToast(`Signed in as ${match.name}`);
   };
 
   const logout = () => {
@@ -226,14 +233,11 @@ export function StoreProvider({ portalRole, children }) {
 
   const generateOtp = (email) => {
     const user = db.users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-    if (!user) return { ok: false, error: 'No account found with this email.' };
+    if (!user) return { ok: false, error: 'No registered user found with this email.' };
     const otp = String(Math.floor(100000 + Math.random() * 900000));
     updateDb((prev) => ({
       ...prev,
-      otpLogs: [
-        { id: `OTP-${Date.now().toString().slice(-4)}`, email: user.email, otp, status: 'Sent', timestamp: new Date().toLocaleString() },
-        ...prev.otpLogs,
-      ],
+      otpLogs: [{ id: `OTP-${Date.now().toString().slice(-4)}`, email: user.email, otp, status: 'Sent', timestamp: new Date().toLocaleString() }, ...prev.otpLogs],
     }));
     return { ok: true, otp };
   };
@@ -243,9 +247,10 @@ export function StoreProvider({ portalRole, children }) {
     if (!log) return { ok: false, error: 'Invalid OTP code.' };
     updateDb((prev) => ({
       ...prev,
-      users: prev.users.map((u) =>
-        u.email.toLowerCase() === email.trim().toLowerCase() ? { ...u, password: newPassword } : u
-      ),
+      users: prev.users.map((u) => (u.email.toLowerCase() === email.trim().toLowerCase() ? { ...u, password: newPassword } : u)),
+      teachers: prev.teachers.map((t) => (t.email.toLowerCase() === email.trim().toLowerCase() ? { ...t, password: newPassword } : t)),
+      students: prev.students.map((s) => (s.email.toLowerCase() === email.trim().toLowerCase() ? { ...s, password: newPassword } : s)),
+      officeWorkers: prev.officeWorkers.map((w) => (w.email.toLowerCase() === email.trim().toLowerCase() ? { ...w, password: newPassword } : w)),
       otpLogs: prev.otpLogs.map((l) => (l.id === log.id ? { ...l, status: 'Verified & Reset' } : l)),
     }), 'Password updated across all portals!');
     return { ok: true };
@@ -256,13 +261,13 @@ export function StoreProvider({ portalRole, children }) {
       value={{
         db,
         updateDb,
-        resetDb,
+        bootstrapMaster,
+        wipeAllData,
         portalRole,
         theme,
         toggleTheme,
         currentUser,
         login,
-        quickDemoLogin,
         logout,
         generateOtp,
         resetPasswordWithOtp,

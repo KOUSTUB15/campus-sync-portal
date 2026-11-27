@@ -4,7 +4,6 @@ import path from 'node:path';
 
 const PORT = 4173;
 const DIST = path.resolve(process.cwd(), 'dist-pages');
-
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
@@ -18,29 +17,20 @@ const MIME = {
 const server = http.createServer((req, res) => {
   const urlPath = (req.url || '/').split('?')[0];
   let filePath = path.join(DIST, urlPath);
-
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, 'index.html');
   }
-
   if (!fs.existsSync(filePath)) {
     const seg = urlPath.split('/').filter(Boolean)[0];
-    if (['master', 'college', 'teacher', 'student'].includes(seg)) {
-      filePath = path.join(DIST, seg, 'index.html');
-    } else {
-      filePath = path.join(DIST, 'index.html');
-    }
+    filePath = ['master', 'college', 'teacher', 'student'].includes(seg)
+      ? path.join(DIST, seg, 'index.html')
+      : path.join(DIST, 'index.html');
   }
-
   const ext = path.extname(filePath);
   res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
   fs.createReadStream(filePath).pipe(res);
 });
 
 server.listen(PORT, () => {
-  console.log(`\nUnified 4-App Campus Portal running at: http://localhost:${PORT}`);
-  console.log(`  - Master App : http://localhost:${PORT}/master/`);
-  console.log(`  - College App: http://localhost:${PORT}/college/`);
-  console.log(`  - Teacher App: http://localhost:${PORT}/teacher/`);
-  console.log(`  - Student App: http://localhost:${PORT}/student/\n`);
+  console.log(`\nUnified 4-App Campus Portal v2 running at: http://localhost:${PORT}`);
 });

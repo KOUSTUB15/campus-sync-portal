@@ -19,11 +19,7 @@ const clients = new Set();
 function broadcast(data, senderId) {
   const msg = `data: ${JSON.stringify({ ...data, senderId })}\n\n`;
   for (const res of clients) {
-    try {
-      res.write(msg);
-    } catch {
-      clients.delete(res);
-    }
+    try { res.write(msg); } catch { clients.delete(res); }
   }
 }
 
@@ -32,11 +28,7 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
+  if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
   if (req.url === '/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -56,10 +48,7 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       try {
         const parsed = JSON.parse(body);
-        statePayload = {
-          updatedAt: parsed.updatedAt || Date.now(),
-          db: parsed.db,
-        };
+        statePayload = { updatedAt: parsed.updatedAt || Date.now(), db: parsed.db };
         fs.writeFileSync(DB_FILE, JSON.stringify(statePayload, null, 2));
         broadcast(statePayload, parsed.senderId || '');
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -89,5 +78,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\x1b[36m[Campus Sync Relay]\x1b[0m Live cross-app sync running on http://localhost:${PORT}`);
+  console.log(`\x1b[36m[Campus Sync Relay v2]\x1b[0m Live cross-app sync running on http://localhost:${PORT}`);
 });

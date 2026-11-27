@@ -1,7 +1,7 @@
-const STORAGE_KEY = 'campus_portal_unified_db_v1';
-const META_KEY = 'campus_portal_sync_meta_v1';
-const GITHUB_CFG_KEY = 'campus_portal_github_sync_v1';
-const CHANNEL_NAME = 'campus_portal_live_bus_v1';
+const STORAGE_KEY = 'campus_portal_v2_db';
+const META_KEY = 'campus_portal_v2_meta';
+const GITHUB_CFG_KEY = 'campus_portal_v2_github_sync';
+const CHANNEL_NAME = 'campus_portal_v2_bus';
 const LOCAL_RELAY_URL = 'http://localhost:5199';
 
 export const TAB_SENDER_ID = `tab_${Math.random().toString(36).slice(2, 10)}`;
@@ -11,7 +11,8 @@ export function loadLocalState(fallbackDb) {
     const raw = localStorage.getItem(STORAGE_KEY);
     const meta = JSON.parse(localStorage.getItem(META_KEY) || '{}');
     if (raw) {
-      return { db: JSON.parse(raw), updatedAt: meta.updatedAt || Date.now() };
+      const parsed = JSON.parse(raw);
+      return { db: { ...fallbackDb, ...parsed }, updatedAt: meta.updatedAt || Date.now() };
     }
   } catch {
     // ignore corrupted storage
@@ -48,18 +49,19 @@ export function saveGitHubSyncConfig(cfg) {
 }
 
 export async function createGitHubSyncGist(token, db) {
+  const cleanToken = token.trim().replace(/^Bearer\s+/i, '');
   const res = await fetch('https://api.github.com/gists', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token.trim()}`,
+      Authorization: `Bearer ${cleanToken}`,
       Accept: 'application/vnd.github+json',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      description: 'Campus Sync Portal — Live Shared Database for Master, College, Teacher & Student Apps',
+      description: 'Campus Sync Portal v2 — Live Shared Database (Zero Demo Data)',
       public: false,
       files: {
-        'campus-portal-db.json': {
+        'campus-portal-v2-db.json': {
           content: JSON.stringify({ updatedAt: Date.now(), db }, null, 2),
         },
       },
@@ -75,16 +77,17 @@ export async function createGitHubSyncGist(token, db) {
 
 export async function pushToGitHubGist(cfg, db, updatedAt) {
   if (!cfg?.token || !cfg?.gistId) return { ok: false, reason: 'not-configured' };
+  const cleanToken = cfg.token.trim().replace(/^Bearer\s+/i, '');
   const res = await fetch(`https://api.github.com/gists/${cfg.gistId.trim()}`, {
     method: 'PATCH',
     headers: {
-      Authorization: `Bearer ${cfg.token.trim()}`,
+      Authorization: `Bearer ${cleanToken}`,
       Accept: 'application/vnd.github+json',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       files: {
-        'campus-portal-db.json': {
+        'campus-portal-v2-db.json': {
           content: JSON.stringify({ updatedAt, db }, null, 2),
         },
       },
@@ -100,13 +103,11 @@ export async function pushToGitHubGist(cfg, db, updatedAt) {
 export async function pullFromGitHubGist(cfg) {
   if (!cfg?.gistId) return null;
   const headers = { Accept: 'application/vnd.github+json' };
-  if (cfg.token) headers.Authorization = `Bearer ${cfg.token.trim()}`;
+  if (cfg.token) headers.Authorization = `Bearer ${cfg.token.trim().replace(/^Bearer\s+/i, '')}`;
   const res = await fetch(`https://api.github.com/gists/${cfg.gistId.trim()}?t=${Date.now()}`, { headers });
-  if (!res.ok) {
-    throw new Error(`GitHub Pull Failed (${res.status})`);
-  }
+  if (!res.ok) throw new Error(`GitHub Pull Failed (${res.status})`);
   const data = await res.json();
-  const file = data.files?.['campus-portal-db.json'];
+  const file = data.files?.['campus-portal-v2-db.json'] || data.files?.['campus-portal-db.json'];
   if (!file?.content) return null;
   return JSON.parse(file.content);
 }
@@ -140,38 +141,27 @@ export async function pullFromLocalRelay() {
 
 export function subscribeLiveChannels(onRemoteState, onRelayStatus, onGhConfig) {
   const cleanups = [];
-
-  // 1. BroadcastChannel (same-origin tabs: GitHub Pages or Unified build)
   if (typeof BroadcastChannel !== 'undefined') {
     const ch = new BroadcastChannel(CHANNEL_NAME);
     ch.onmessage = (e) => {
       const msg = e.data;
       if (!msg || msg.senderId === TAB_SENDER_ID) return;
-      if (msg.type === 'DB_UPDATED' && msg.db) {
-        onRemoteState(msg.db, msg.updatedAt, 'BroadcastChannel');
-      }
-      if (msg.type === 'GH_CONFIG_UPDATED' && msg.cfg && onGhConfig) {
-        onGhConfig(msg.cfg);
-      }
+      if (msg.type === 'DB_UPDATED' && msg.db) onRemoteState(msg.db, msg.updatedAt, 'BroadcastChannel');
+      if (msg.type === 'GH_CONFIG_UPDATED' && msg.cfg && onGhConfig) onGhConfig(msg.cfg);
     };
     cleanups.push(() => ch.close());
   }
-
-  // 2. Storage event fallback
   const onStorage = (e) => {
     if (e.key === STORAGE_KEY && e.newValue) {
       try {
         const meta = JSON.parse(localStorage.getItem(META_KEY) || '{}');
         onRemoteState(JSON.parse(e.newValue), meta.updatedAt || Date.now(), 'LocalStorage');
-      } catch {
-        // ignore
-      }
+      } catch { /* ignore */ }
     }
   };
   window.addEventListener('storage', onStorage);
   cleanups.push(() => window.removeEventListener('storage', onStorage));
 
-  // 3. Local Multi-Port Dev Relay (SSE on localhost:5199)
   if (['localhost', '127.0.0.1'].includes(window.location.hostname) && typeof EventSource !== 'undefined') {
     try {
       const es = new EventSource(`${LOCAL_RELAY_URL}/events`);
@@ -180,24 +170,16 @@ export function subscribeLiveChannels(onRemoteState, onRelayStatus, onGhConfig) 
       es.onmessage = (e) => {
         try {
           const payload = JSON.parse(e.data);
-          if (payload.type === 'connected') {
-            onRelayStatus(true);
-            return;
-          }
+          if (payload.type === 'connected') { onRelayStatus(true); return; }
           if (payload.senderId === TAB_SENDER_ID) return;
-          if (payload.db) {
-            onRemoteState(payload.db, payload.updatedAt || Date.now(), 'Local Dev Relay');
-          }
-        } catch {
-          // ignore
-        }
+          if (payload.db) onRemoteState(payload.db, payload.updatedAt || Date.now(), 'Local Dev Relay');
+        } catch { /* ignore */ }
       };
       cleanups.push(() => es.close());
     } catch {
       onRelayStatus(false);
     }
   }
-
   return () => cleanups.forEach((fn) => fn());
 }
 

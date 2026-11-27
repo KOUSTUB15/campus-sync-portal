@@ -1,8 +1,8 @@
 {
   "name": "campus-sync-portal",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "4 Interconnected React Campus Management Web Apps (Master, College, Teacher, Student) with Local + GitHub Online Sync",
+  "description": "4 Interconnected Zero-Demo-Data React Campus Management Web Apps (Master, College, Teacher/HOD, Student)",
   "workspaces": [
     "packages/shared-core",
     "apps/master-app",
