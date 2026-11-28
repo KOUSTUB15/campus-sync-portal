@@ -26,7 +26,6 @@ for (const app of apps) {
   const srcDist = path.join(root, 'apps', app.name, 'dist');
   const destDist = path.join(outRoot, app.slug);
   fs.cpSync(srcDist, destDist, { recursive: true });
-  // SPA refresh fallback inside each subpath
   fs.copyFileSync(path.join(destDist, 'index.html'), path.join(destDist, '404.html'));
 }
 
@@ -35,68 +34,161 @@ const landingHtml = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Campus Management Platform v2 — 4 Connected Portals</title>
+  <title>Campus Academic Management Platform — 4 Connected Portals</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; }
-    body { min-height: 100vh; background: radial-gradient(circle at 15% 15%, #1d2559 0%, #090d1f 55%, #050712 100%); color: #f8fafc; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .wrap { max-width: 1020px; width: 100%; }
-    .hero { text-align: center; margin-bottom: 36px; }
-    .badge { display: inline-block; padding: 6px 14px; border-radius: 999px; background: rgba(99,102,241,0.18); border: 1px solid rgba(129,140,248,0.35); color: #a5b4fc; font-size: 13px; font-weight: 600; margin-bottom: 14px; }
-    h1 { font-size: clamp(28px, 4vw, 44px); background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 55%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
-    p { color: #94a3b8; font-size: 15px; max-width: 680px; margin: 0 auto; line-height: 1.6; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)); gap: 18px; }
-    a.card { text-decoration: none; color: inherit; padding: 24px; border-radius: 18px; background: rgba(15,23,42,0.74); border: 1px solid rgba(148,163,184,0.18); backdrop-filter: blur(14px); transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; display: flex; flex-direction: column; gap: 10px; }
-    a.card:hover { transform: translateY(-4px); border-color: rgba(129,140,248,0.65); box-shadow: 0 18px 40px rgba(79,70,229,0.22); }
-    .tag { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; padding: 4px 10px; border-radius: 8px; width: fit-content; }
-    .t-master { background: rgba(168,85,247,0.2); color: #d8b4fe; }
-    .t-college { background: rgba(59,130,246,0.2); color: #93c5fd; }
-    .t-teacher { background: rgba(6,182,212,0.2); color: #67e8f9; }
-    .t-student { background: rgba(16,185,129,0.2); color: #6ee7b7; }
-    h2 { font-size: 19px; color: #f8fafc; }
-    .desc { font-size: 13px; color: #94a3b8; line-height: 1.5; flex: 1; }
-    .cta { font-size: 13px; font-weight: 600; color: #818cf8; margin-top: 6px; }
-    .foot { text-align: center; margin-top: 28px; color: #64748b; font-size: 13px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #f6f7f9;
+      color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      border-top: 4px solid #1e3a5f;
+      padding: 20px 28px;
+    }
+    .header-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .brand {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e3a5f;
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1e3a5f;
+      background: #eef3f9;
+      border: 1px solid #bfd0e6;
+      padding: 4px 10px;
+      border-radius: 5px;
+    }
+    main {
+      flex: 1;
+      max-width: 1080px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 44px 24px;
+    }
+    .hero { margin-bottom: 34px; border-bottom: 1px solid #e2e8f0; padding-bottom: 24px; }
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(26px, 3.6vw, 36px);
+      color: #0f172a;
+      margin-bottom: 8px;
+      letter-spacing: -0.015em;
+    }
+    .hero p { color: #475569; font-size: 15px; max-width: 680px; line-height: 1.6; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+      gap: 18px;
+    }
+    a.card {
+      text-decoration: none;
+      color: inherit;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-top: 3px solid #1e3a5f;
+      border-radius: 9px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    a.card:hover {
+      border-color: #1e3a5f;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      transform: translateY(-2px);
+    }
+    .num {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #64748b;
+    }
+    h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 19px;
+      color: #0f172a;
+    }
+    .desc { font-size: 13.5px; color: #475569; line-height: 1.55; flex: 1; }
+    .cta {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e3a5f;
+      padding-top: 8px;
+      border-top: 1px solid #f1f5f9;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #64748b;
+      font-size: 12.5px;
+      border-top: 1px solid #e2e8f0;
+      background: #ffffff;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <header>
+    <div class="header-inner">
+      <div class="brand">Campus Academic Management Platform</div>
+      <span class="pill">4 Connected Role-Scoped Portals</span>
+    </div>
+  </header>
+  <main>
     <div class="hero">
-      <span class="badge">v2.0 • 100% Original Data • Role-Scoped Live Portals</span>
-      <h1>Campus Academic Management Platform</h1>
-      <p>Start in Master Portal to set your Institution Name and create real accounts for College Office Staff, HODs, Faculty, and Students — zero demo data.</p>
+      <h1>Select Your Institutional Portal</h1>
+      <p>Start in the Master Portal to configure your Institution Name and issue login credentials for College Office Staff, HODs, Faculty, and Students. All 4 portals stay synchronized locally and across devices via GitHub Cloud Sync.</p>
     </div>
     <div class="grid">
       <a class="card" href="./master/">
-        <span class="tag t-master">Master Portal</span>
-        <h2>Master Control</h2>
-        <div class="desc">Set Institution Name, manage Teachers, Students, Office Workers, Library Books catalog & GitHub Cloud Sync.</div>
-        <div class="cta">Launch Master App &rarr;</div>
+        <span class="num">Portal 01 &middot; Master Control</span>
+        <h2>Master Portal</h2>
+        <div class="desc">Set Institution Name, manage Teachers, Students, Office Workers, Library Catalog, Global Circulars &amp; Factory Reset.</div>
+        <div class="cta">Open Master Portal &rarr;</div>
       </a>
       <a class="card" href="./college/">
-        <span class="tag t-college">Office & Admin</span>
+        <span class="num">Portal 02 &middot; Administration</span>
         <h2>College Portal</h2>
-        <div class="desc">Role-isolated portals for College Admin, Accountant, Peon, Clerk & Librarian. Admissions, Calendar, Certificates & Meetings.</div>
-        <div class="cta">Launch College App &rarr;</div>
+        <div class="desc">Dedicated portals for College Admin, Accountant, Peon, Clerk &amp; Librarian. Admissions, Calendar, Certificates &amp; Meetings.</div>
+        <div class="cta">Open College Portal &rarr;</div>
       </a>
       <a class="card" href="./teacher/">
-        <span class="tag t-teacher">HOD & Faculty</span>
+        <span class="num">Portal 03 &middot; Academics</span>
         <h2>Teachers Portal</h2>
-        <div class="desc">Dedicated HOD Portal (Eligibility, Year Back, Hall Tickets, Timetable, Leave, Startups) & Job-Scoped Faculty Portal.</div>
-        <div class="cta">Launch Teachers App &rarr;</div>
+        <div class="desc">Split HOD Portal (Eligibility, Year Back, Hall Tickets, Timetable, Leave, Startups) &amp; Job-Scoped Faculty Portal.</div>
+        <div class="cta">Open Teachers Portal &rarr;</div>
       </a>
       <a class="card" href="./student/">
-        <span class="tag t-student">Learners</span>
+        <span class="num">Portal 04 &middot; Learners</span>
         <h2>Student Portal</h2>
-        <div class="desc">Semester Subjects, Year-Back lock, Timetable & Replacements, Quizzes, Assignments, Result Entry & Meeting Attendance.</div>
-        <div class="cta">Launch Student App &rarr;</div>
+        <div class="desc">Semester Subjects, Year-Back lock, Timetable &amp; Replacements, Quizzes, Assignments, Result Entry &amp; Project Meetings.</div>
+        <div class="cta">Open Student Portal &rarr;</div>
       </a>
     </div>
-    <div class="foot">Connected live via Same-Origin Bus, MacBook Dev Relay & Autofill-Proof GitHub Gist Cloud Sync.</div>
-  </div>
+  </main>
+  <footer>Campus Sync Portal &middot; Simple, Classic Institutional Edition</footer>
 </body>
 </html>`;
 
 fs.writeFileSync(path.join(outRoot, 'index.html'), landingHtml);
 fs.writeFileSync(path.join(outRoot, '404.html'), landingHtml);
 fs.writeFileSync(path.join(outRoot, '.nojekyll'), '');
-console.log('\nAll 4 v2 apps built cleanly into ./dist-pages !');
+console.log('\nAll 4 classic v3 apps built cleanly into ./dist-pages !');

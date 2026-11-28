@@ -29,6 +29,16 @@ export function saveLocalState(db, updatedAt = Date.now()) {
   }
 }
 
+export function clearAllPortalAuthSessions() {
+  try {
+    ['master', 'college', 'teacher', 'student'].forEach((role) => {
+      sessionStorage.removeItem(`campus_v2_auth_${role}`);
+    });
+  } catch {
+    // ignore
+  }
+}
+
 export function getGitHubSyncConfig() {
   try {
     return JSON.parse(localStorage.getItem(GITHUB_CFG_KEY) || '{}');
@@ -58,7 +68,7 @@ export async function createGitHubSyncGist(token, db) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      description: 'Campus Sync Portal v2 — Live Shared Database (Zero Demo Data)',
+      description: 'Campus Sync Portal — Live Shared Database (Zero Demo Data)',
       public: false,
       files: {
         'campus-portal-v2-db.json': {
@@ -139,13 +149,17 @@ export async function pullFromLocalRelay() {
   }
 }
 
-export function subscribeLiveChannels(onRemoteState, onRelayStatus, onGhConfig) {
+export function subscribeLiveChannels(onRemoteState, onRelayStatus, onGhConfig, onFactoryReset) {
   const cleanups = [];
   if (typeof BroadcastChannel !== 'undefined') {
     const ch = new BroadcastChannel(CHANNEL_NAME);
     ch.onmessage = (e) => {
       const msg = e.data;
       if (!msg || msg.senderId === TAB_SENDER_ID) return;
+      if (msg.type === 'FACTORY_RESET') {
+        if (onFactoryReset) onFactoryReset(msg.updatedAt);
+        return;
+      }
       if (msg.type === 'DB_UPDATED' && msg.db) onRemoteState(msg.db, msg.updatedAt, 'BroadcastChannel');
       if (msg.type === 'GH_CONFIG_UPDATED' && msg.cfg && onGhConfig) onGhConfig(msg.cfg);
     };
@@ -187,6 +201,14 @@ export function broadcastLocalUpdate(db, updatedAt) {
   if (typeof BroadcastChannel !== 'undefined') {
     const ch = new BroadcastChannel(CHANNEL_NAME);
     ch.postMessage({ type: 'DB_UPDATED', db, updatedAt, senderId: TAB_SENDER_ID });
+    ch.close();
+  }
+}
+
+export function broadcastFactoryReset(updatedAt) {
+  if (typeof BroadcastChannel !== 'undefined') {
+    const ch = new BroadcastChannel(CHANNEL_NAME);
+    ch.postMessage({ type: 'FACTORY_RESET', updatedAt, senderId: TAB_SENDER_ID });
     ch.close();
   }
 }

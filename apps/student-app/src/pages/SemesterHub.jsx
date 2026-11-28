@@ -30,7 +30,7 @@ export default function SemesterHub() {
       />
 
       {isYearBack && (
-        <div className="card" style={{ borderColor: 'rgba(239,68,68,0.6)', background: 'rgba(239,68,68,0.12)' }}>
+        <div className="alert-panel alert-danger">
           <div className="row">
             <AlertTriangle size={22} color="var(--danger)" />
             <div>

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Lock, Mail, KeyRound, ArrowRight, Sun, Moon, ExternalLink, Cloud, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, KeyRound, ArrowRight, Sun, Moon, ExternalLink, Cloud, ShieldCheck, RotateCcw } from 'lucide-react';
 import { useCampusStore } from '../StoreContext.jsx';
 import { PORTAL_CONFIG, getPortalUrl } from '../portalUrls.js';
 import { GitHubSyncModal } from './GitHubSyncModal.jsx';
+import { DoubleConfirmResetModal } from './UI.jsx';
 
 export function LoginScreen({ portalId, heading, tagline }) {
   const {
     db,
     login,
     bootstrapMaster,
+    wipeAllData,
     generateOtp,
     resetPasswordWithOtp,
     theme,
@@ -21,6 +23,7 @@ export function LoginScreen({ portalId, heading, tagline }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [syncOpen, setSyncOpen] = useState(false);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
 
   // First-time Master Setup state (only when no master exists yet)
   const needsBootstrap = portalId === 'master' && !db.users.some((u) => u.portal === 'master');
@@ -35,7 +38,7 @@ export function LoginScreen({ portalId, heading, tagline }) {
     phone: '',
   });
 
-  // OTP state
+  // OTP state (for College / Teacher / Student portals)
   const [otpEmail, setOtpEmail] = useState('');
   const [sentOtp, setSentOtp] = useState('');
   const [enteredOtp, setEnteredOtp] = useState('');
@@ -46,6 +49,7 @@ export function LoginScreen({ portalId, heading, tagline }) {
 
   const handleBootstrap = (e) => {
     e.preventDefault();
+    setError('');
     if (setup.password.length < 6) {
       setError('Password must be at least 6 characters.');
       return;
@@ -70,7 +74,7 @@ export function LoginScreen({ portalId, heading, tagline }) {
     }
   };
 
-  const handleReset = (e) => {
+  const handleOtpReset = (e) => {
     e.preventDefault();
     setError('');
     if (newPassword.length < 6) { setError('New password must be at least 6 characters.'); return; }
@@ -85,18 +89,26 @@ export function LoginScreen({ portalId, heading, tagline }) {
     }
   };
 
+  const handleCompleteFactoryReset = async () => {
+    await wipeAllData();
+    setEmail('');
+    setPassword('');
+    setError('');
+    setMode('login');
+  };
+
   return (
     <div className="login-shell">
       <div className="login-card">
-        <div className="row" style={{ justifyContent: 'space-between', marginBottom: 16 }}>
+        <div className="row" style={{ justifyContent: 'space-between', marginBottom: 18 }}>
           <span className="badge">{PORTAL_CONFIG[portalId]?.title}</span>
           <div className="row" style={{ gap: 6 }}>
-            <button className="btn btn-sm" onClick={() => setSyncOpen(true)} title="Connect GitHub Sync">
+            <button type="button" className="btn btn-sm" onClick={() => setSyncOpen(true)} title="Connect GitHub Sync">
               <Cloud size={14} color={ghConfig.gistId ? 'var(--success)' : 'var(--accent)'} />
               <span>{ghConfig.gistId ? 'Synced' : 'Sync'}</span>
             </button>
-            <button className="btn btn-sm" onClick={toggleTheme} title="Toggle Theme">
-              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            <button type="button" className="btn btn-sm" onClick={toggleTheme} title="Switch Light / Dark Mode">
+              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
             </button>
           </div>
         </div>
@@ -104,35 +116,58 @@ export function LoginScreen({ portalId, heading, tagline }) {
         {needsBootstrap ? (
           <form className="stack" style={{ gap: 12 }} onSubmit={handleBootstrap}>
             <div>
-              <h1 style={{ fontSize: 22, fontWeight: 800 }}>First-Time Institution Setup</h1>
-              <p className="card-sub">Zero demo data — create your real Institution & Master Admin account below (or click <strong>Sync</strong> above to pull existing data from GitHub).</p>
+              <h1 className="login-heading">Institution Setup</h1>
+              <p className="card-sub">
+                Enter your Institution details and create the Master Administrator account below, or click <strong>Sync</strong> above to link an existing GitHub Gist.
+              </p>
             </div>
-            <div className="field"><label>Institution Name</label><input className="input" placeholder="e.g. Maratha Mandal Engineering College" value={setup.institutionName} onChange={(e) => setSetup({ ...setup, institutionName: e.target.value })} required /></div>
+            <div className="field">
+              <label>Institution Name</label>
+              <input className="input" placeholder="e.g. Maratha Mandal Engineering College" value={setup.institutionName} onChange={(e) => setSetup({ ...setup, institutionName: e.target.value })} required />
+            </div>
             <div className="grid-2" style={{ gap: 10 }}>
-              <div className="field"><label>Institution Code</label><input className="input" placeholder="e.g. 2MM" value={setup.institutionCode} onChange={(e) => setSetup({ ...setup, institutionCode: e.target.value })} required /></div>
-              <div className="field"><label>Academic Year</label><input className="input" value={setup.academicYear} onChange={(e) => setSetup({ ...setup, academicYear: e.target.value })} required /></div>
+              <div className="field">
+                <label>Institution Code</label>
+                <input className="input" placeholder="e.g. 2MM" value={setup.institutionCode} onChange={(e) => setSetup({ ...setup, institutionCode: e.target.value })} required />
+              </div>
+              <div className="field">
+                <label>Academic Year</label>
+                <input className="input" value={setup.academicYear} onChange={(e) => setSetup({ ...setup, academicYear: e.target.value })} required />
+              </div>
             </div>
-            <div className="field"><label>Master Admin Full Name</label><input className="input" placeholder="Your Name" value={setup.name} onChange={(e) => setSetup({ ...setup, name: e.target.value })} required /></div>
+            <div className="field">
+              <label>Master Administrator Full Name</label>
+              <input className="input" placeholder="Full Name" value={setup.name} onChange={(e) => setSetup({ ...setup, name: e.target.value })} required />
+            </div>
             <div className="grid-2" style={{ gap: 10 }}>
-              <div className="field"><label>Master Admin Email</label><input type="email" className="input" placeholder="master@college.edu" value={setup.email} onChange={(e) => setSetup({ ...setup, email: e.target.value })} required /></div>
-              <div className="field"><label>Phone</label><input className="input" placeholder="+91 ..." value={setup.phone} onChange={(e) => setSetup({ ...setup, phone: e.target.value })} /></div>
+              <div className="field">
+                <label>Administrator Email</label>
+                <input type="email" className="input" placeholder="master@college.edu" value={setup.email} onChange={(e) => setSetup({ ...setup, email: e.target.value })} required />
+              </div>
+              <div className="field">
+                <label>Phone</label>
+                <input className="input" placeholder="+91 ..." value={setup.phone} onChange={(e) => setSetup({ ...setup, phone: e.target.value })} />
+              </div>
             </div>
-            <div className="field"><label>Create Password (min 6 chars)</label><input type="password" className="input" value={setup.password} onChange={(e) => setSetup({ ...setup, password: e.target.value })} required /></div>
-            {error && <div className="badge badge-danger" style={{ borderRadius: 10, padding: 10 }}>{error}</div>}
-            <button className="btn btn-primary" type="submit" style={{ width: '100%', padding: 11 }}>
-              <ShieldCheck size={16} /> Initialize Institution & Enter Master Portal
+            <div className="field">
+              <label>Create Password (min 6 characters)</label>
+              <input type="password" className="input" value={setup.password} onChange={(e) => setSetup({ ...setup, password: e.target.value })} required />
+            </div>
+            {error && <div className="alert-panel alert-danger">{error}</div>}
+            <button className="btn btn-primary" type="submit" style={{ width: '100%', padding: 10 }}>
+              <ShieldCheck size={15} /> Initialize Institution &amp; Enter Master Portal
             </button>
           </form>
         ) : (
           <>
-            <h1 style={{ fontSize: 23, fontWeight: 800, marginBottom: 4 }}>{heading}</h1>
+            <h1 className="login-heading">{heading}</h1>
             <p className="card-sub" style={{ marginBottom: 18 }}>
-              {db.masterSettings.institutionName ? `${db.masterSettings.institutionName} • ` : ''}{tagline}
+              {db.masterSettings.institutionName ? `${db.masterSettings.institutionName} — ` : ''}{tagline}
             </p>
 
             {portalUsersCount === 0 && (
-              <div className="badge badge-warning" style={{ borderRadius: 10, padding: 10, display: 'block', marginBottom: 14 }}>
-                No {portalId} accounts created yet. Create credentials in <strong>Master Portal</strong> or <strong>College Portal</strong>, or click <strong>Sync</strong> above to pull data from GitHub Gist.
+              <div className="alert-panel alert-warning" style={{ marginBottom: 14 }}>
+                No {portalId} accounts registered yet. Create credentials in <strong>Master Portal</strong> or <strong>College Portal</strong>, or click <strong>Sync</strong> above to pull data from GitHub.
               </div>
             )}
 
@@ -140,58 +175,81 @@ export function LoginScreen({ portalId, heading, tagline }) {
               <form className="stack" style={{ gap: 13 }} onSubmit={handleLogin}>
                 <div className="field">
                   <label>Registered Email</label>
-                  <input className="input" type="email" placeholder="Enter email assigned by Admin" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  <input className="input" type="email" placeholder="Enter your official email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="field">
                   <label>Password</label>
                   <input className="input" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
-                {error && <div className="badge badge-danger" style={{ borderRadius: 10, padding: 10 }}>{error}</div>}
-                <button className="btn btn-primary" type="submit" style={{ width: '100%', padding: 11 }}>
+                {error && <div className="alert-panel alert-danger">{error}</div>}
+                <button className="btn btn-primary" type="submit" style={{ width: '100%', padding: 10 }}>
                   <Lock size={15} /> Sign In
                 </button>
-                <div className="row" style={{ justifyContent: 'space-between' }}>
-                  <button type="button" className="btn btn-sm" style={{ background: 'transparent', border: 'none', color: 'var(--accent)' }} onClick={() => { setMode('otp'); setError(''); }}>
-                    <KeyRound size={14} /> Forgot Password? OTP Reset
-                  </button>
-                  <span className="card-sub">{portalUsersCount} active user(s)</span>
-                </div>
+
+                {portalId === 'master' ? (
+                  <div style={{ marginTop: 4, paddingTop: 12, borderTop: '1px solid var(--border)' }} className="stack">
+                    <div className="row" style={{ justifyContent: 'space-between' }}>
+                      <span className="card-sub">Forgot Master Password?</span>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-danger"
+                        onClick={() => setResetModalOpen(true)}
+                      >
+                        <RotateCcw size={13} /> Reset All 4 Portals
+                      </button>
+                    </div>
+                    <p className="card-sub" style={{ fontSize: 11.5 }}>
+                      Resetting clears all data across Master, College, Teachers &amp; Student portals so you can set up a new Master account. You will be asked to confirm twice.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="row" style={{ justifyContent: 'space-between' }}>
+                    <button type="button" className="btn btn-sm btn-ghost" onClick={() => { setMode('otp'); setError(''); }}>
+                      <KeyRound size={14} /> Forgot Password? OTP Reset
+                    </button>
+                    <span className="card-sub">{portalUsersCount} active user(s)</span>
+                  </div>
+                )}
               </form>
             ) : (
-              <form className="stack" style={{ gap: 13 }} onSubmit={handleReset}>
+              <form className="stack" style={{ gap: 13 }} onSubmit={handleOtpReset}>
                 <div className="field">
                   <label>Registered Email</label>
                   <input className="input" type="email" value={otpEmail} onChange={(e) => setOtpEmail(e.target.value)} required />
                 </div>
                 <button type="button" className="btn" onClick={handleSendOtp}><Mail size={15} /> Generate 6-Digit OTP</button>
-                {otpInfo && <div className="badge badge-success" style={{ borderRadius: 10, padding: 10, display: 'block' }}>{otpInfo}</div>}
+                {otpInfo && <div className="alert-panel alert-success">{otpInfo}</div>}
                 {sentOtp && (
                   <>
                     <div className="field"><label>Enter OTP</label><input className="input" value={enteredOtp} onChange={(e) => setEnteredOtp(e.target.value)} required /></div>
                     <div className="field"><label>New Password</label><input className="input" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required /></div>
-                    <button className="btn btn-primary" type="submit">Verify & Update Password <ArrowRight size={15} /></button>
+                    <button className="btn btn-primary" type="submit">Verify &amp; Update Password <ArrowRight size={15} /></button>
                   </>
                 )}
-                {error && <div className="badge badge-danger" style={{ borderRadius: 10, padding: 10 }}>{error}</div>}
+                {error && <div className="alert-panel alert-danger">{error}</div>}
                 <button type="button" className="btn btn-sm" onClick={() => setMode('login')}>Back to Sign In</button>
               </form>
             )}
           </>
         )}
 
-        <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
-          <div className="card-sub" style={{ marginBottom: 8, fontWeight: 600 }}>Switch Connected Campus App:</div>
-          <div className="portal-links">
-            {Object.values(PORTAL_CONFIG).map((p) => (
-              <a key={p.id} href={getPortalUrl(p.id, portalId)} className={`portal-pill ${p.id === portalId ? 'current' : ''}`}>
-                {p.title.replace(' Portal', '')} <ExternalLink size={10} style={{ display: 'inline' }} />
-              </a>
-            ))}
-          </div>
+        <div className="divider" />
+        <div className="card-sub" style={{ marginBottom: 8, fontWeight: 600 }}>Switch Connected Portal</div>
+        <div className="portal-links">
+          {Object.values(PORTAL_CONFIG).map((p) => (
+            <a key={p.id} href={getPortalUrl(p.id, portalId)} className={`portal-pill ${p.id === portalId ? 'current' : ''}`}>
+              {p.title.replace(' Portal', '')} <ExternalLink size={10} style={{ display: 'inline' }} />
+            </a>
+          ))}
         </div>
       </div>
 
       <GitHubSyncModal open={syncOpen} onClose={() => setSyncOpen(false)} />
+      <DoubleConfirmResetModal
+        open={resetModalOpen}
+        onClose={() => setResetModalOpen(false)}
+        onConfirmReset={handleCompleteFactoryReset}
+      />
     </div>
   );
 }

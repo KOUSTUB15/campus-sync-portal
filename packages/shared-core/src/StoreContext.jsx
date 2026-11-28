@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { EMPTY_DB } from './initialData.js';
 import {
   loadLocalState,
   saveLocalState,
+  clearAllPortalAuthSessions,
   broadcastLocalUpdate,
+  broadcastFactoryReset,
   subscribeLiveChannels,
   pushToLocalRelay,
   pullFromLocalRelay,
@@ -15,14 +18,15 @@ import {
 } from './syncEngine.js';
 
 const StoreContext = createContext(null);
-const THEME_KEY = 'campus_portal_v2_theme';
+const THEME_KEY = 'campus_portal_v3_theme';
 
 export function StoreProvider({ portalRole, children }) {
   const initial = loadLocalState(EMPTY_DB);
   const [db, setDb] = useState(initial.db);
   const lastUpdatedRef = useRef(initial.updatedAt);
 
-  const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || 'dark');
+  // Classic Light default for simple, professional institutional look
+  const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || 'light');
   const [relayConnected, setRelayConnected] = useState(false);
   const [ghConfig, setGhConfig] = useState(() => getGitHubSyncConfig());
   const [syncMeta, setSyncMeta] = useState({
@@ -45,8 +49,8 @@ export function StoreProvider({ portalRole, children }) {
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type, id: Date.now() });
     setTimeout(() => {
-      setToast((prev) => (prev && Date.now() - prev.id >= 3200 ? null : prev));
-    }, 3400);
+      setToast((prev) => (prev && Date.now() - prev.id >= 3600 ? null : prev));
+    }, 3800);
   }, []);
 
   useEffect(() => {
@@ -66,21 +70,36 @@ export function StoreProvider({ portalRole, children }) {
     setSyncMeta({ state: 'synced', source, lastSyncTime: new Date().toLocaleTimeString(), error: '' });
   }, []);
 
+  const handleRemoteReset = useCallback((remoteTs) => {
+    lastUpdatedRef.current = remoteTs || Date.now();
+    saveLocalState(EMPTY_DB, lastUpdatedRef.current);
+    clearAllPortalAuthSessions();
+    setDb(EMPTY_DB);
+    setCurrentUser(null);
+    setSyncMeta({ state: 'synced', source: 'Factory Reset', lastSyncTime: new Date().toLocaleTimeString(), error: '' });
+    showToast('All 4 portals were reset by Master Portal.', 'error');
+  }, [showToast]);
+
   useEffect(() => {
-    const unsub = subscribeLiveChannels(applyRemote, setRelayConnected, setGhConfig);
+    const unsub = subscribeLiveChannels(applyRemote, setRelayConnected, setGhConfig, handleRemoteReset);
     pullFromLocalRelay().then((payload) => {
       if (payload?.db && payload.updatedAt > lastUpdatedRef.current) {
         applyRemote(payload.db, payload.updatedAt, 'Local Dev Relay');
       }
     });
     return unsub;
-  }, [applyRemote]);
+  }, [applyRemote, handleRemoteReset]);
 
-  // Keep currentUser synced if admin updates their role/name/email
+  // Keep currentUser synced — and immediately sign out if account was deleted or portals were reset
   useEffect(() => {
     if (!currentUser) return;
     const latest = db.users.find((u) => u.id === currentUser.id);
-    if (latest && JSON.stringify(latest) !== JSON.stringify(currentUser)) {
+    if (!latest) {
+      sessionStorage.removeItem(authStorageKey);
+      setCurrentUser(null);
+      return;
+    }
+    if (JSON.stringify(latest) !== JSON.stringify(currentUser)) {
       sessionStorage.setItem(authStorageKey, JSON.stringify(latest));
       setCurrentUser(latest);
     }
@@ -207,10 +226,29 @@ export function StoreProvider({ portalRole, children }) {
     }
   };
 
-  const wipeAllData = () => {
-    updateDb(() => EMPTY_DB, 'All data cleared to clean empty state.');
-    sessionStorage.removeItem(authStorageKey);
+  // Complete 4-portal Factory Reset: wipes local DB, all 4 portal sessions, local relay, and linked GitHub Gist
+  const wipeAllData = async () => {
+    const now = Date.now();
+    lastUpdatedRef.current = now;
+    setDb(EMPTY_DB);
+    saveLocalState(EMPTY_DB, now);
+    clearAllPortalAuthSessions();
     setCurrentUser(null);
+    broadcastLocalUpdate(EMPTY_DB, now);
+    broadcastFactoryReset(now);
+    pushToLocalRelay(EMPTY_DB, now);
+
+    const cfg = getGitHubSyncConfig();
+    if (cfg?.token && cfg?.gistId) {
+      try {
+        setSyncMeta((s) => ({ ...s, state: 'syncing', error: '' }));
+        await pushToGitHubGist(cfg, EMPTY_DB, now);
+        setSyncMeta({ state: 'synced', source: 'GitHub Gist Cloud (Reset)', lastSyncTime: new Date().toLocaleTimeString(), error: '' });
+      } catch (err) {
+        setSyncMeta((s) => ({ ...s, state: 'error', error: err.message }));
+      }
+    }
+    showToast('All 4 portals have been reset and all data cleared. Set up a new Master Admin.');
   };
 
   const login = (email, password) => {
@@ -283,6 +321,12 @@ export function StoreProvider({ portalRole, children }) {
       }}
     >
       {children}
+      {toast && (
+        <div className={`toast ${toast.type}`}>
+          {toast.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} color="var(--success)" />}
+          <span>{toast.message}</span>
+        </div>
+      )}
     </StoreContext.Provider>
   );
 }

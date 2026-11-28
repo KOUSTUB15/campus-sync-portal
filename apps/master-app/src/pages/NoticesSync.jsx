@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Send, Trash2, Cloud, Download, Upload, RotateCcw } from 'lucide-react';
-import { useCampusStore, PageHeader, EmptyState, GitHubSyncModal } from '@campus/shared-core';
+import { useCampusStore, PageHeader, EmptyState, GitHubSyncModal, DoubleConfirmResetModal } from '@campus/shared-core';
 
 export default function NoticesSync() {
   const { db, updateDb, wipeAllData, syncMeta, ghConfig } = useCampusStore();
   const [notice, setNotice] = useState({ title: '', body: '', audience: 'All Portals', priority: 'High' });
   const [syncOpen, setSyncOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
 
   const postNotice = (e) => {
     e.preventDefault();
@@ -26,7 +27,7 @@ export default function NoticesSync() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `campus-portal-v2-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `campus-portal-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -71,9 +72,9 @@ export default function NoticesSync() {
         </form>
 
         <div className="card stack">
-          <div className="card-title">Cloud Sync & Data Backup</div>
+          <div className="card-title">Cloud Sync &amp; Data Backup</div>
           <div className="card-sub">
-            Active Sync: <strong>{syncMeta.source}</strong> • Last Sync: {syncMeta.lastSyncTime}<br />
+            Active Sync: <strong>{syncMeta.source}</strong> &middot; Last Sync: {syncMeta.lastSyncTime}<br />
             GitHub Gist: <strong>{ghConfig.gistId ? `Connected (${ghConfig.gistId.slice(0, 10)}...)` : 'Not Linked'}</strong>
           </div>
           <div className="row">
@@ -84,8 +85,8 @@ export default function NoticesSync() {
             </label>
           </div>
           <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-            <button className="btn btn-danger" onClick={() => { if (window.confirm('Erase ALL stored data and reset to completely empty state?')) wipeAllData(); }}>
-              <RotateCcw size={15} /> Wipe All Data (Factory Empty)
+            <button className="btn btn-danger" onClick={() => setResetOpen(true)}>
+              <RotateCcw size={15} /> Reset All 4 Portals (Clear All Data)
             </button>
           </div>
         </div>
@@ -97,8 +98,8 @@ export default function NoticesSync() {
           <EmptyState title="No Global Notices" message="Publish your first official circular above." />
         ) : (
           db.globalNotices.map((n) => (
-            <div key={n.id} className="row" style={{ justifyContent: 'space-between', padding: 12, borderRadius: 10, background: 'var(--surface-elevated)' }}>
-              <div><strong>{n.title}</strong><div className="card-sub">{n.body} ({n.audience} • {n.date})</div></div>
+            <div key={n.id} className="row" style={{ justifyContent: 'space-between', padding: 12, borderRadius: 8, background: 'var(--surface-elevated)', border: '1px solid var(--border)' }}>
+              <div><strong>{n.title}</strong><div className="card-sub">{n.body} ({n.audience} &middot; {n.date})</div></div>
               <button className="btn btn-sm btn-danger" onClick={() => updateDb((prev) => ({ ...prev, globalNotices: prev.globalNotices.filter((x) => x.id !== n.id) }), 'Notice deleted')}><Trash2 size={14} /></button>
             </div>
           ))
@@ -106,6 +107,7 @@ export default function NoticesSync() {
       </div>
 
       <GitHubSyncModal open={syncOpen} onClose={() => setSyncOpen(false)} />
+      <DoubleConfirmResetModal open={resetOpen} onClose={() => setResetOpen(false)} onConfirmReset={wipeAllData} />
     </div>
   );
 }

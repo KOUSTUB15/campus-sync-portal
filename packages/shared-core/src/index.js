@@ -10,6 +10,7 @@ export {
   EmptyState,
   BarChart,
   Modal,
+  DoubleConfirmResetModal,
   readFileAsDataUrl,
   FileUploadButton,
   DownloadFileButton,
