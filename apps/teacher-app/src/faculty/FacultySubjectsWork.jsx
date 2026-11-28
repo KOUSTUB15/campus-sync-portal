@@ -202,7 +202,7 @@ export default function FacultySubjectsWork() {
               const vals = Object.values(log.records);
               const pres = vals.filter((v) => v === 'Present').length;
               return (
-                <div key={log.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 10, background: 'var(--surface-elevated)', marginBottom: 8 }}>
+                <div key={log.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 5, background: 'var(--surface-elevated)', marginBottom: 8 }}>
                   <div><strong>{log.date} — {log.sessionType}</strong> {log.topic ? `(${log.topic})` : ''}</div>
                   <div className="row">
                     <span className="badge badge-success">{pres}/{vals.length} Present</span>

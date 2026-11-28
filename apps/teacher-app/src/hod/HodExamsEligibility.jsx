@@ -242,7 +242,7 @@ export default function HodExamsEligibility() {
               <button className="btn btn-primary" type="submit"><Plus size={15} /> Publish Exam Slot</button>
             </form>
             {db.exams.map((ex) => (
-              <div key={ex.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+              <div key={ex.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                 <div><strong>{ex.examName}: {ex.subjectName}</strong><div className="card-sub">{ex.date} • {ex.time} • {ex.room} • Invigilator: {ex.invigilatorName}</div></div>
                 <button className="btn btn-sm btn-danger" onClick={() => updateDb((prev) => ({ ...prev, exams: prev.exams.filter((x) => x.id !== ex.id) }), 'Exam deleted')}><Trash2 size={13} /></button>
               </div>
@@ -267,7 +267,7 @@ export default function HodExamsEligibility() {
               <button className="btn btn-primary" type="submit"><Plus size={15} /> Allot Exam Role</button>
             </form>
             {db.examRoles.map((r) => (
-              <div key={r.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+              <div key={r.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                 <div><strong>{r.facultyName} — <span className="badge">{r.role}</span></strong><div className="card-sub">{r.examName} • {r.date} • {r.room || 'Campus'}</div></div>
                 <button className="btn btn-sm btn-danger" onClick={() => updateDb((prev) => ({ ...prev, examRoles: prev.examRoles.filter((x) => x.id !== r.id) }), 'Exam role deleted')}><Trash2 size={13} /></button>
               </div>

@@ -126,7 +126,7 @@ export default function FacultyQuizzesAssignments() {
             </div>
 
             {qForm.questions.map((q, qi) => (
-              <div key={qi} style={{ padding: 12, borderRadius: 12, background: 'var(--surface-elevated)' }} className="stack">
+              <div key={qi} style={{ padding: 12, borderRadius: 5, background: 'var(--surface-elevated)' }} className="stack">
                 <div className="row" style={{ justifyContent: 'space-between' }}>
                   <strong>Question {qi + 1}</strong>
                   {qForm.questions.length > 1 && (

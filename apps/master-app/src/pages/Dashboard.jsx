@@ -12,7 +12,7 @@ export default function Dashboard({ onNavigate }) {
     <div className="stack">
       <PageHeader
         title={db.masterSettings.institutionName || 'Master Control Hub'}
-        subtitle={`Academic Year ${db.masterSettings.academicYear} • Active Term: ${db.masterSettings.activeSemester} • 100% Real User Data`}
+        subtitle={`Academic Year ${db.masterSettings.academicYear} • Active Term: ${db.masterSettings.activeSemester} • Institutional Control Panel`}
         actions={
           <button className="btn btn-primary" onClick={() => onNavigate('sync')}>
             <Cloud size={15} /> {ghConfig.gistId ? 'GitHub Cloud Active' : 'Connect GitHub Sync'}
@@ -35,7 +35,7 @@ export default function Dashboard({ onNavigate }) {
           </div>
           <div className="stack" style={{ gap: 10 }}>
             {['college', 'teacher', 'student'].map((pid) => (
-              <div key={pid} className="row" style={{ justifyContent: 'space-between', padding: 12, borderRadius: 12, background: 'var(--surface-elevated)' }}>
+              <div key={pid} className="row" style={{ justifyContent: 'space-between', padding: 12, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                 <div>
                   <strong>{PORTAL_CONFIG[pid].title}</strong>
                   <div className="card-sub">{PORTAL_CONFIG[pid].subtitle} • {db.users.filter((u) => u.portal === pid).length} registered login(s)</div>

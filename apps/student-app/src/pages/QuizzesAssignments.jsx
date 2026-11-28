@@ -78,7 +78,7 @@ export default function QuizzesAssignments() {
                     {myAttempt && <span className="badge badge-success">Marks Obtained: {myAttempt.score}/{myAttempt.total}</span>}
                   </div>
                   {qz.questions.map((q, qi) => (
-                    <div key={qi} style={{ padding: 10, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+                    <div key={qi} style={{ padding: 10, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                       <div style={{ fontWeight: 600, marginBottom: 6 }}>{qi + 1}. {q.q}</div>
                       <div className="grid-2" style={{ gap: 8 }}>
                         {q.options.map((opt, oi) => (

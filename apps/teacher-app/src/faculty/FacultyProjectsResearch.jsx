@@ -159,7 +159,7 @@ export default function FacultyProjectsResearch() {
               <button className="btn btn-primary" type="submit">Request HOD Permission</button>
             </form>
             {myLeaves.map((l) => (
-              <div key={l.id} style={{ padding: 10, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+              <div key={l.id} style={{ padding: 10, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                 <div className="row" style={{ justifyContent: 'space-between' }}><strong>{l.from} to {l.to}</strong><span className={`badge ${l.status === 'Approved' ? 'badge-success' : l.status === 'Rejected' ? 'badge-danger' : 'badge-warning'}`}>{l.status}</span></div>
                 <div className="card-sub">{l.reason} {l.replacementFacultyName ? `• Replacement: ${l.replacementFacultyName}` : ''}</div>
               </div>
@@ -172,7 +172,7 @@ export default function FacultyProjectsResearch() {
               <EmptyState title="No Replacement Duties" message="If HOD assigns you to cover a colleague's class, it appears here immediately." />
             ) : (
               myReplacementDuties.map((e) => (
-                <div key={e.id} style={{ padding: 10, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+                <div key={e.id} style={{ padding: 10, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                   <strong>{e.day} • {e.slot} — {e.subjectName}</strong>
                   <div className="card-sub">Covering for {e.facultyName} • {e.dept} {e.semester} • Room {e.room || 'TBD'}</div>
                 </div>
@@ -230,7 +230,7 @@ export default function FacultyProjectsResearch() {
         <div className="card stack">
           <div className="row"><Rocket size={18} color="var(--accent)" /><span className="card-title">Incubation Startup Mentoring (Allotted by HOD)</span></div>
           {myStartups.map((st) => (
-            <div key={st.id} style={{ padding: 14, borderRadius: 12, background: 'var(--surface-elevated)' }} className="stack">
+            <div key={st.id} style={{ padding: 14, borderRadius: 5, background: 'var(--surface-elevated)' }} className="stack">
               <div className="row" style={{ justifyContent: 'space-between' }}><strong>{st.title} ({st.domain})</strong><span className="badge badge-info">{st.status}</span></div>
               <div className="card-sub">Student: {st.studentName} ({st.usn}) — {st.description}</div>
               <div className="row">

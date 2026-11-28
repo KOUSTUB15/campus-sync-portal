@@ -139,7 +139,7 @@ export function GitHubSyncModal({ open, onClose }) {
           Auto-sync across MacBook, iPhone & teammates every 8 seconds
         </label>
 
-        {msg && <div className="badge badge-info" style={{ borderRadius: 10, padding: '8px 12px', display: 'block' }}>{msg}</div>}
+        {msg && <div className="badge badge-info" style={{ borderRadius: 5, padding: '8px 12px', display: 'block' }}>{msg}</div>}
 
         <div className="row">
           <button className="btn btn-primary" disabled={busy} onClick={handleSave}><CheckCircle2 size={15} /> Connect & Save</button>

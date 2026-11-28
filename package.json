@@ -1,6 +1,6 @@
 {
   "name": "campus-sync-portal",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "description": "4 Interconnected Zero-Demo-Data React Campus Management Web Apps (Master, College, Teacher/HOD, Student)",
   "workspaces": [

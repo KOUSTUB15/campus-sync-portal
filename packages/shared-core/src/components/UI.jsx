@@ -218,13 +218,13 @@ export function printDocumentHtml(title, bodyHtml) {
   if (!win) return;
   win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
     <style>
-      body { font-family: Georgia, "Times New Roman", serif; padding: 32px; color: #0f172a; line-height: 1.55; }
-      .doc-box { border: 2px solid #1e3a5f; padding: 28px; border-radius: 6px; max-width: 760px; margin: 0 auto; }
-      h1 { font-size: 21px; margin: 0 0 4px; text-align: center; color: #1e3a5f; }
-      .sub { text-align: center; color: #475569; font-size: 13px; margin-bottom: 18px; font-family: sans-serif; }
+      body { font-family: Georgia, "Times New Roman", serif; padding: 32px; color: #1a1a19; line-height: 1.55; }
+      .doc-box { border: 2px solid #0f4c81; padding: 28px; border-radius: 6px; max-width: 760px; margin: 0 auto; }
+      h1 { font-size: 21px; margin: 0 0 4px; text-align: center; color: #0f4c81; }
+      .sub { text-align: center; color: #4c4c48; font-size: 13px; margin-bottom: 18px; font-family: sans-serif; }
       table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; font-family: sans-serif; }
-      th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
-      th { background: #f1f5f9; }
+      th, td { border: 1px solid #c5c5be; padding: 8px 10px; text-align: left; }
+      th { background: #ecece8; }
     </style></head><body>${bodyHtml}<script>window.onload=()=>window.print();</script></body></html>`);
   win.document.close();
 }

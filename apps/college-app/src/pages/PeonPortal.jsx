@@ -34,7 +34,7 @@ export default function PeonPortal() {
           <EmptyState title="No Tasks Assigned Yet" message="Tasks assigned to you by College Admin will appear here automatically." />
         ) : (
           myTasks.map((t) => (
-            <div key={t.id} style={{ padding: 14, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-elevated)' }}>
+            <div key={t.id} style={{ padding: 14, borderRadius: 5, border: '1px solid var(--border)', background: 'var(--surface-elevated)' }}>
               <div className="row" style={{ justifyContent: 'space-between' }}>
                 <div>
                   <strong>{t.title}</strong>

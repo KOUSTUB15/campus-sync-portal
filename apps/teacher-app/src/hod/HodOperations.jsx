@@ -91,7 +91,7 @@ export default function HodOperations() {
             <EmptyState title="No Leave Requests" message="Student and Faculty leave applications appear here for HOD permission." />
           ) : (
             db.leaves.map((l) => (
-              <div key={l.id} style={{ padding: 14, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-elevated)' }}>
+              <div key={l.id} style={{ padding: 14, borderRadius: 5, border: '1px solid var(--border)', background: 'var(--surface-elevated)' }}>
                 <div className="row" style={{ justifyContent: 'space-between' }}>
                   <div>
                     <strong>{l.applicantName}</strong> <span className="badge">{l.applicantType.toUpperCase()}</span>
@@ -173,7 +173,7 @@ export default function HodOperations() {
             <EmptyState title="No Startup Requests" message="Student startup requests submitted in Student Portal appear here for Incubation Faculty allotment." />
           ) : (
             db.startups.map((st) => (
-              <div key={st.id} style={{ padding: 14, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-elevated)' }}>
+              <div key={st.id} style={{ padding: 14, borderRadius: 5, border: '1px solid var(--border)', background: 'var(--surface-elevated)' }}>
                 <div className="row" style={{ justifyContent: 'space-between' }}>
                   <div><strong>{st.title}</strong> ({st.domain})<div className="card-sub">By {st.studentName} ({st.usn}) • {st.description}</div></div>
                   <span className="badge badge-info">{st.status}</span>
@@ -223,7 +223,7 @@ export default function HodOperations() {
             <div className="row" style={{ marginBottom: 10 }}><Award size={18} color="var(--accent)" /><span className="card-title">Faculty Research Publications</span></div>
             {db.researchPapers.length === 0 ? <EmptyState title="No Publications Yet" message="Publications logged by Faculty appear here." /> : (
               db.researchPapers.map((r) => (
-                <div key={r.id} style={{ padding: 10, borderRadius: 10, background: 'var(--surface-elevated)', marginBottom: 8 }}>
+                <div key={r.id} style={{ padding: 10, borderRadius: 5, background: 'var(--surface-elevated)', marginBottom: 8 }}>
                   <strong>{r.title}</strong> <span className="badge">{r.type}</span>
                   <div className="card-sub">{r.facultyName} • {r.venue} ({r.year})</div>
                 </div>
@@ -234,7 +234,7 @@ export default function HodOperations() {
             <div className="card-title" style={{ marginBottom: 10 }}>College Faculty Meetings</div>
             {db.facultyMeetings.length === 0 ? <EmptyState title="No Meetings Scheduled" message="Meetings scheduled in College Portal appear here." /> : (
               db.facultyMeetings.map((m) => (
-                <div key={m.id} style={{ padding: 10, borderRadius: 10, background: 'var(--surface-elevated)', marginBottom: 8 }}>
+                <div key={m.id} style={{ padding: 10, borderRadius: 5, background: 'var(--surface-elevated)', marginBottom: 8 }}>
                   <strong>{m.title}</strong><div className="card-sub">{m.date} • {m.time} • {m.venue} — {m.agenda}</div>
                 </div>
               ))

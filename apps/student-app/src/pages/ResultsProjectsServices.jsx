@@ -193,7 +193,7 @@ export default function ResultsProjectsServices() {
           <div className="card stack">
             <div className="card-title">My Leave Status</div>
             {myLeaves.length === 0 ? <EmptyState title="No Leave Requests" message="Submit a leave request on the left." /> : myLeaves.map((l) => (
-              <div key={l.id} style={{ padding: 12, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+              <div key={l.id} style={{ padding: 12, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                 <div className="row" style={{ justifyContent: 'space-between' }}><strong>{l.from} to {l.to}</strong><span className={`badge ${l.status === 'Approved' ? 'badge-success' : l.status === 'Rejected' ? 'badge-danger' : 'badge-warning'}`}>{l.status}</span></div>
                 <div className="card-sub">{l.reason}</div>
               </div>
@@ -214,7 +214,7 @@ export default function ResultsProjectsServices() {
           <div className="card stack">
             <div className="card-title">My Startup Status & Incubation Faculty</div>
             {myStartups.length === 0 ? <EmptyState title="No Startup Requests" message="Submit your startup request to get allotted an Incubation Faculty mentor by HOD." /> : myStartups.map((st) => (
-              <div key={st.id} style={{ padding: 12, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+              <div key={st.id} style={{ padding: 12, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                 <div className="row" style={{ justifyContent: 'space-between' }}><strong>{st.title}</strong><span className="badge badge-info">{st.status}</span></div>
                 <div className="card-sub">Incubation Faculty: <strong>{st.incubationFacultyName || 'Awaiting HOD Allotment'}</strong></div>
                 {st.incubationFeedback && <div className="badge badge-success" style={{ marginTop: 6 }}>Feedback: {st.incubationFeedback}</div>}
@@ -229,7 +229,7 @@ export default function ResultsProjectsServices() {
           <div className="card stack">
             <div className="row"><Calendar size={18} color="var(--accent)" /><span className="card-title">Whole Semester Calendar (College)</span></div>
             {db.semesterCalendar.length === 0 ? <EmptyState title="No Calendar Events" message="Whole semester calendar published by College appears here." /> : db.semesterCalendar.map((c) => (
-              <div key={c.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+              <div key={c.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                 <div><strong>{c.title}</strong><div className="card-sub">{c.date}{c.endDate ? ` to ${c.endDate}` : ''} • {c.description}</div></div>
                 <span className="badge">{c.category}</span>
               </div>
@@ -238,7 +238,7 @@ export default function ResultsProjectsServices() {
           <div className="card stack">
             <div className="card-title">Exam Timetable ({student.semester})</div>
             {db.exams.filter((ex) => ex.semester === student.semester).length === 0 ? <EmptyState title="No Exams Allotted" message="Exams scheduled by HOD appear here." /> : db.exams.filter((ex) => ex.semester === student.semester).map((ex) => (
-              <div key={ex.id} style={{ padding: 10, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+              <div key={ex.id} style={{ padding: 10, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                 <strong>{ex.examName}: {ex.subjectName}</strong>
                 <div className="card-sub">{ex.date} • {ex.time} • Room: {ex.room}</div>
               </div>

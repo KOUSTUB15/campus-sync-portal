@@ -170,7 +170,7 @@ export default function AdminOperations() {
               <EmptyState title="No Faculty Meetings Scheduled" message="Schedule a faculty meeting above." />
             ) : (
               db.facultyMeetings.map((m) => (
-                <div key={m.id} style={{ padding: 14, borderRadius: 12, background: 'var(--surface-elevated)' }}>
+                <div key={m.id} style={{ padding: 14, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                   <div className="row" style={{ justifyContent: 'space-between' }}>
                     <div><strong>{m.title}</strong><div className="card-sub">{m.date} • {m.time} • Venue: {m.venue}</div></div>
                     <div className="row">

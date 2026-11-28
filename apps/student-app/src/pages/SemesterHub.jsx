@@ -117,13 +117,13 @@ export default function SemesterHub() {
           ) : (
             <div className="stack" style={{ gap: 8 }}>
               {myHallTickets.map((h) => (
-                <div key={h.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+                <div key={h.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                   <div><strong>Hall Ticket: {h.examTitle}</strong><div className="card-sub">{h.semester} • Uploaded by {h.uploadedBy}</div></div>
                   <DownloadFileButton fileName={h.fileName} dataUrl={h.fileDataUrl} label="Download" />
                 </div>
               ))}
               {myCerts.map((c) => (
-                <div key={c.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 10, background: 'var(--surface-elevated)' }}>
+                <div key={c.id} className="row" style={{ justifyContent: 'space-between', padding: 10, borderRadius: 5, background: 'var(--surface-elevated)' }}>
                   <div><strong>{c.type}</strong><div className="card-sub">{c.remarks || c.uploadedAt}</div></div>
                   <DownloadFileButton fileName={c.fileName} dataUrl={c.fileDataUrl} label="Download" />
                 </div>

@@ -30,165 +30,177 @@ for (const app of apps) {
 }
 
 const landingHtml = `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Campus Academic Management Platform — 4 Connected Portals</title>
+  <title>Campus Academic Management System</title>
   <style>
+    :root, [data-theme="light"] {
+      --bg-base: #f2f2ef;
+      --surface: #ffffff;
+      --surface-subtle: #ecece8;
+      --border: #dcdcd6;
+      --border-strong: #c5c5be;
+      --text-primary: #1a1a19;
+      --text-secondary: #4c4c48;
+      --text-muted: #70706b;
+      --accent: #0f4c81;
+      --accent-soft: #ebf2f8;
+      --accent-border: #bfd4e6;
+    }
+    [data-theme="dark"] {
+      --bg-base: #141414;
+      --surface: #1d1d1d;
+      --surface-subtle: #2a2a2a;
+      --border: #333333;
+      --border-strong: #464646;
+      --text-primary: #ecece9;
+      --text-secondary: #b5b5af;
+      --text-muted: #8a8a84;
+      --accent: #4f8cc9;
+      --accent-soft: #1b2836;
+      --accent-border: #2f4b66;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      background: #f6f7f9;
-      color: #0f172a;
-      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
       display: flex;
       flex-direction: column;
+      line-height: 1.5;
     }
     header {
-      background: #ffffff;
-      border-bottom: 1px solid #e2e8f0;
-      border-top: 4px solid #1e3a5f;
-      padding: 20px 28px;
+      background: var(--surface);
+      border-top: 3px solid var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
     }
     .header-inner {
-      max-width: 1080px;
+      max-width: 1040px;
       margin: 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 12px;
     }
-    .brand {
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 20px;
-      font-weight: 700;
-      color: #1e3a5f;
-    }
-    .pill {
-      font-size: 12px;
+    .brand { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+    .theme-btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text-primary);
+      font-size: 12.5px;
       font-weight: 600;
-      color: #1e3a5f;
-      background: #eef3f9;
-      border: 1px solid #bfd0e6;
-      padding: 4px 10px;
-      border-radius: 5px;
+      cursor: pointer;
     }
+    .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
     main {
       flex: 1;
-      max-width: 1080px;
+      max-width: 1040px;
       width: 100%;
       margin: 0 auto;
-      padding: 44px 24px;
+      padding: 40px 24px;
     }
-    .hero { margin-bottom: 34px; border-bottom: 1px solid #e2e8f0; padding-bottom: 24px; }
-    h1 {
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(26px, 3.6vw, 36px);
-      color: #0f172a;
-      margin-bottom: 8px;
-      letter-spacing: -0.015em;
-    }
-    .hero p { color: #475569; font-size: 15px; max-width: 680px; line-height: 1.6; }
+    .hero { margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+    h1 { font-size: 26px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; letter-spacing: -0.015em; }
+    .hero p { color: var(--text-secondary); font-size: 14px; max-width: 660px; }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
-      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
     }
     a.card {
       text-decoration: none;
       color: inherit;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-top: 3px solid #1e3a5f;
-      border-radius: 9px;
-      padding: 22px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: 5px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      gap: 9px;
+      transition: border-color 0.14s ease, box-shadow 0.14s ease;
     }
     a.card:hover {
-      border-color: #1e3a5f;
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-      transform: translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
-    .num {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: #64748b;
-    }
-    h2 {
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 19px;
-      color: #0f172a;
-    }
-    .desc { font-size: 13.5px; color: #475569; line-height: 1.55; flex: 1; }
-    .cta {
-      font-size: 13px;
-      font-weight: 600;
-      color: #1e3a5f;
-      padding-top: 8px;
-      border-top: 1px solid #f1f5f9;
-    }
+    .num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+    h2 { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+    .desc { font-size: 13px; color: var(--text-secondary); flex: 1; }
+    .cta { font-size: 13px; font-weight: 600; color: var(--accent); padding-top: 8px; border-top: 1px solid var(--border); }
     footer {
       text-align: center;
-      padding: 20px;
-      color: #64748b;
-      font-size: 12.5px;
-      border-top: 1px solid #e2e8f0;
-      background: #ffffff;
+      padding: 16px;
+      color: var(--text-muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
     }
   </style>
 </head>
 <body>
   <header>
     <div class="header-inner">
-      <div class="brand">Campus Academic Management Platform</div>
-      <span class="pill">4 Connected Role-Scoped Portals</span>
+      <div class="brand">Campus Academic Management System</div>
+      <button class="theme-btn" id="themeToggle" type="button">Dark Theme</button>
     </div>
   </header>
   <main>
     <div class="hero">
-      <h1>Select Your Institutional Portal</h1>
-      <p>Start in the Master Portal to configure your Institution Name and issue login credentials for College Office Staff, HODs, Faculty, and Students. All 4 portals stay synchronized locally and across devices via GitHub Cloud Sync.</p>
+      <h1>Institutional Portals</h1>
+      <p>Select your portal below. Administrators start in the Master Portal to configure institution details and issue staff and student credentials.</p>
     </div>
     <div class="grid">
       <a class="card" href="./master/">
-        <span class="num">Portal 01 &middot; Master Control</span>
+        <span class="num">01 &middot; Master</span>
         <h2>Master Portal</h2>
-        <div class="desc">Set Institution Name, manage Teachers, Students, Office Workers, Library Catalog, Global Circulars &amp; Factory Reset.</div>
+        <div class="desc">Institution settings, teachers, students, office staff directory, library catalog, circulars, and system reset.</div>
         <div class="cta">Open Master Portal &rarr;</div>
       </a>
       <a class="card" href="./college/">
-        <span class="num">Portal 02 &middot; Administration</span>
+        <span class="num">02 &middot; Office</span>
         <h2>College Portal</h2>
-        <div class="desc">Dedicated portals for College Admin, Accountant, Peon, Clerk &amp; Librarian. Admissions, Calendar, Certificates &amp; Meetings.</div>
+        <div class="desc">Role-based workspaces for College Admin, Accountant, Peon, Clerk, and Librarian. Admissions, calendar, and certificates.</div>
         <div class="cta">Open College Portal &rarr;</div>
       </a>
       <a class="card" href="./teacher/">
-        <span class="num">Portal 03 &middot; Academics</span>
+        <span class="num">03 &middot; Academics</span>
         <h2>Teachers Portal</h2>
-        <div class="desc">Split HOD Portal (Eligibility, Year Back, Hall Tickets, Timetable, Leave, Startups) &amp; Job-Scoped Faculty Portal.</div>
+        <div class="desc">Dedicated HOD management (eligibility, hall tickets, timetables, leaves, startups) and subject-scoped Faculty workspace.</div>
         <div class="cta">Open Teachers Portal &rarr;</div>
       </a>
       <a class="card" href="./student/">
-        <span class="num">Portal 04 &middot; Learners</span>
+        <span class="num">04 &middot; Learners</span>
         <h2>Student Portal</h2>
-        <div class="desc">Semester Subjects, Year-Back lock, Timetable &amp; Replacements, Quizzes, Assignments, Result Entry &amp; Project Meetings.</div>
+        <div class="desc">Semester subjects, timetable and replacements, quizzes, assignments, result entry, and project meeting attendance.</div>
         <div class="cta">Open Student Portal &rarr;</div>
       </a>
     </div>
   </main>
-  <footer>Campus Sync Portal &middot; Simple, Classic Institutional Edition</footer>
+  <footer>Campus Academic Management System</footer>
+  <script>
+    const key = 'campus_portal_v3_theme';
+    const root = document.documentElement;
+    const btn = document.getElementById('themeToggle');
+    function apply(t) {
+      root.setAttribute('data-theme', t);
+      localStorage.setItem(key, t);
+      btn.textContent = t === 'dark' ? 'Light Theme' : 'Dark Theme';
+    }
+    apply(localStorage.getItem(key) || 'light');
+    btn.addEventListener('click', () => apply(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+  </script>
 </body>
 </html>`;
 
 fs.writeFileSync(path.join(outRoot, 'index.html'), landingHtml);
 fs.writeFileSync(path.join(outRoot, '404.html'), landingHtml);
 fs.writeFileSync(path.join(outRoot, '.nojekyll'), '');
-console.log('\nAll 4 classic v3 apps built cleanly into ./dist-pages !');
+console.log('\nAll 4 classic v4 apps built cleanly into ./dist-pages !');
